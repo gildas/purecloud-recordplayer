@@ -1,0 +1,24 @@
+{
+  "name": "recordplayer",
+  "version": "0.0.1",
+  "description": "a Simple Web Page to demonstrate Recording Access with PureCloud",
+  "main": "app.js",
+  "scripts": {
+    "test": "faucet"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/gildas/purecloud-recordplayer.git"
+  },
+  "keywords": [
+    "PureCloud",
+    "Recording",
+    "Recorder"
+  ],
+  "author": "gildas.cherruel@inin.com",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/gildas/purecloud-recordplayer/issues"
+  },
+  "homepage": "https://github.com/gildas/purecloud-recordplayer#readme"
+}
