@@ -2,6 +2,7 @@
 
 var app_info     = require('./package.json');
 var fs           = require('fs');
+var path         = require('path');
 var util         = require('util');
 var config       = require('nconf');
 var gitrev       = require('git-rev');
@@ -39,6 +40,8 @@ config.argv({
       { id: 'jp', name: 'Japan',     suffix: 'jp' },
       { id: 'us', name: 'US',        suffix: 'com' }
     ],
+    "organizations": [
+    ]
   },
 });
 
@@ -54,7 +57,6 @@ gitrev.tag(function(value)    { app.set('git_tag', value);    console.log('Git t
  * Configure the application.
  */
 app.set('port', config.get('port'));
-app.set('purecloud_regions', config.get('purecloud:regions');
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 app.engine('ejs', engine);
@@ -72,6 +74,15 @@ app.use(session({
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/bower_components', express.static(path.join(__dirname, '/bower_components')));
 
+app.set('purecloud_regions', config.get('purecloud:regions'));
+app.set('purecloud_organizations', config.get('purecloud:organizations'));
+app.get('purecloud_organizations').forEach(function(organization) {
+  organization['region'] = app.get('purecloud_regions').find(function(region) { return region.id === organization.region_id; });
+});
+console.log("Regions: ", app.get('purecloud_regions'));
+console.log("Config Organizations: ", config.get('purecloud:organizations'));
+console.log("Organizations: ", app.get('purecloud_organizations'));
+
 /**
  * Configure the routes.
  */
@@ -82,12 +93,12 @@ app.use(function(req, res, next) {
   console.log('Session id: ' + req.session.id);
   if (req.session.token) { console.log('Session Token: ' + req.session.token); }
   if (req.session.user)  { console.log('Session user:  ' + req.session.user.username); }
-  res.locals.purecloud_organizations = app.get('organizations');
+  res.locals.purecloud_organizations = app.get('purecloud_organizations');
   res.locals.purecloud_token         = req.session.token;
   res.locals.current_user            = req.session.user;
-  res.locals.git_commit              = git_commit;
-  res.locals.git_branch              = git_branch;
-  res.locals.app_version             = package_info.version;
+  res.locals.git_commit              = app.get('git_commit');
+  res.locals.git_branch              = app.get('git_branch');
+  res.locals.app_version             = app_info.version;
   next();
 });
 
