@@ -55,6 +55,7 @@ gitrev.tag(function(value)    { app.set('git_tag', value);    console.log('Git t
  */
 app.set('port', config.get('port'));
 app.set('purecloud_regions', config.get('purecloud:regions');
+app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 app.engine('ejs', engine);
 
@@ -91,6 +92,7 @@ app.use(function(req, res, next) {
 });
 
 // Application routes
+app.use('/', require('./routes/index'));
 
 // Error routes
 app.use(function(req, res, next) { // catch 404 and forward to error handler
