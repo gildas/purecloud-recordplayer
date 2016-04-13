@@ -23,6 +23,9 @@ coverage
 # Compiled binary addons (http://nodejs.org/api/addons.html)
 build/Release
 
+# Bower components
+bower_components/
+
 # Dependency directory
 node_modules
 
@@ -31,3 +34,9 @@ node_modules
 
 # Optional REPL history
 .node_repl_history
+
+# Website configuration
+config.json
+
+# Heroku local configuration
+.env
