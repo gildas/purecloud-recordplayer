@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+<% if (settings.env === 'development') { %>
+    <link rel='stylesheet' href='/bower_components/bootswatch-dist/css/bootstrap.css' />
+    <link rel="stylesheet" href="http://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.4.0/css/font-awesome.css">
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+<% } else { %>
+    <link rel='stylesheet' href='/bower_components/bootswatch-dist/css/bootstrap.min.css' />
+    <link rel="stylesheet" href="http://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.4.0/css/font-awesome.min.css">
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+<% } %>
+    <script language='javascript'>
+      "use strict";
+
+      var purecloud_organization = null;
+      var purecloud_application  = null;
+      var purecloud_session      = null;
+    </script>
+  </head>
+  <body>
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <a class="navbar-left nav-logo" href="#">
+            <img alt="Interactive Intelligence, Inc." src="/images/logo-inin.png" width="40">
+          </a>
+          <a class="navbar-brand" href="/">&nbsp;PureCloud Recording Demo</a>
+        </div>
+        <div class="navbar-collapse collapse">
+          <ul class="nav navbar-nav">
+            <li><a href="/">Home</a></li>
+          </ul>
+          <ul class="nav navbar-nav navbar-right">
+            <li>
+              <p class="navbar-text">
+                <a id="current_user" href="/users/me" class="navbar-link"><span id="user"></span>&nbsp;<span class="glyphicon glyphicon-user"></span></a>
+              </p>
+            </li>
+            <li>
+              <div id="dropdown_org" class="dropdown">
+                <button id="login_off" class="btn btn-primary active dropdown-toggle" data-login="Log in" data-logoff="Log off" data-toggle="dropdown" aria-haspopup="true" aria-expanded="true">
+                  <span id="icon" class="glyphicon"></span>&nbsp;<span id="text">Log in</span>
+                  <span class="caret"></span>
+                  <span id="current_org" class="hidden" data-orgid="" data-appid="" data-region_suffix=""></span>
+                </button>
+                <ul class="dropdown-menu" role="menu" aria-labelledby="dropdown_org">
+                  <% purecloud_organizations.forEach(function(organization){ %>
+                    <li><a href="#" data-orgid="<%= organization.id %>" data-appid="<%= organization.application %>" data-region_suffix="<%= organization.region.suffix %>"><%= organization.name %> (<%= organization.region.id %>)</a></li>
+                  <% }); %>
+                </ul>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container body-content">
+      <div id="flash" class="alert alert-dismissible fade in" role="alert">
+        <button type="button" class="close" data-dismiss="alert" arial-label="Close"><span arial-hidden="true">&times;</span></button>
+        <span id="text"></span>
+      </div>
+
+    <%- body %>
+      <hr />
+      <footer class="footer">
+          <div class="container">
+            <div class="row">
+              <div class="col-sm-4">
+                <div class="pull-left">
+                  <div class="foot-header">
+                    Get the <a href="https://github.com/gildas/RecordPlayer">source</a>!
+                  </div>
+                </div>
+              </div>
+              <div class="col-sm-4">
+                <div class="foot-header">
+                  <p class="text-center">PureCloud Record Player Demonstration</p>
+                </div>
+              </div>
+              <div class="col-sm-4">
+                <div class="pull-right">
+                   <div class="foot-header">
+                     v. <a href="https://github.com/gildas/RecordPlayer/tree/<%= app_version %>"><%= app_version %></a>
+                     <% if (git_commit) { -%>
+                     | <a href="https://github.com/gildas/RecordPlayer/tree/<%= git_commit %>"><%= git_commit %>@<%= git_branch %></a>
+                     <% } -%>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+      </footer>
+    </div>
+    <!-- SCRIPTS  {{{ -->
+<% if (settings.env === 'development') { %>
+    <script src="/bower_components/jquery/dist/jquery.js"></script>
+    <script src="/bower_components/jquery.redirect/jquery.redirect.js"></script>
+    <script src="/bower_components/js-cookie/src/js.cookie.js"></script>
+    <script src="/bower_components/bootstrap/dist/js/bootstrap.js"></script>
+    <script src="/bower_components/mustache.js/mustache.js"></script>
+    <script src="/bower_components/PureCloud/dist/purecloud-api.js"></script>
+    <script src="/javascripts/statebutton.js"></script>
+    <script src="/javascripts/helpers.js"></script>
+<% } else { %>
+    <script src="/bower_components/jquery/dist/jquery.min.js"></script>
+    <script src="/bower_components/jquery.redirect/jquery.redirect.js"></script>
+    <script src="/bower_components/js-cookie/src/js.cookie.js"></script>
+    <script src="/bower_components/bootstrap/dist/js/bootstrap.min.js"></script>
+    <script src="/bower_components/mustache.js/mustache.min.js"></script>
+    <script src="/bower_components/PureCloud/dist/purecloud-api.js"></script>
+    <script src="/javascripts/statebutton.js"></script>
+    <script src="/javascripts/helpers.js"></script>
+<% } %>
+    <script language='javascript'>
+      function login(event, region_suffix, organization_id, application_id)
+      {
+        if (event) { event.preventDefault(); }
+        console.group('Logging in...');
+        organization_id   = organization_id || $(this).attr('data-orgid');
+        organization_name = $(this).text()  || organization_id;
+        region_suffix     = region_suffix   || $(this).attr('data-region_suffix');
+        application_id    = application_id  || $(this).attr('data-appid');
+        Cookies.set('PureCloud_region',          region_suffix);
+        Cookies.set('PureCloud_organization_id', organization_id);
+        Cookies.set('PureCloud_application_id',  application_id);
+
+        console.log("Authorizing with organization \"%s\" on mypurecloud.%s...", organization_name,  region_suffix);
+        purecloud_session.environment( 'mypurecloud.' + region_suffix);
+        purecloud_session.authorize(application_id, window.location.href, null)
+          .done(function(){
+            if (!purecloud_session.hasAuthorizationToken())
+            {
+              console.error("Failure logging in, nuking PureCloud session");
+              purecloud_session.logout();
+              window.location.replace('/');
+            }
+            console.log("PureCloud Token: %s", purecloud_session.authToken());
+
+            $('#login_off #icon').addClass('glyphicon-log-out');
+            $('#login_off #text').text($('#login_off').attr('data-logoff'));
+            $('#login_off .caret').hide();
+            $('#login_off .dropdown-menu').hide();
+            $('#login_off').on('click', logoff);
+            $('.logged_in #text_ok').show();
+            $('.logged_in #text_ng').hide();
+            $('#login_off').show();
+            new UsersApi(purecloud_session).getMe()
+              .done(function(user){
+                console.log('Logged in user: %O', user);
+                $('#current_user #user').text(user.displayName);
+                $('#current_user').show();
+                $.ajax({
+                    method: 'POST',
+                    url: '/login',
+                    data: {
+                      token:           purecloud_session.authToken(),
+                      user:            JSON.stringify(user),
+                      organization_id: organization_id,
+                    },
+                })
+                .done(function(){ console.log("Current user updated"); });
+              })
+              .fail(function(error){
+                console.error(error);
+                purecloud_session.logout();
+              });
+          });
+        console.groupEnd();
+      }
+
+      function logoff(event)
+      {
+        if (event) { event.preventDefault(); }
+        console.group("Logging off...");
+        purecloud_session.logout();
+        Cookies.remove('PureCloud_region');
+        Cookies.remove('PureCloud_application_id');
+        Cookies.remove('PureCloud_organization_id');
+        if (window && window.localStorage) { window.localStorage.authtoken = null; }
+        window.location.replace('/logout');
+        console.groupEnd();
+      }
+
+      $(document).ready(function(){
+        $('#flash').hide();
+        $('#current_user').hide();
+        $('#login_off').hide();
+
+        // Checking for PureCloud errors before the PureCloudSession takes over the hash
+        if ((typeof window !== 'undefined') && window.location.hash) {
+          console.group('Analyzing URI Fragment');
+          var fragment_parms = {};
+
+          window.location.hash.substring(1).split('&').forEach(function(pair){
+            var components = pair.split('=');
+            if (components.length > 0) { fragment_parms[components[0]] = components[1]; }
+          });
+          console.log("Fragment Parameters: %O", fragment_parms);
+          if (fragment_parms['error']) {
+            console.error("Error: %s", fragment_parms['error']);
+            $('#flash #text').text(fragment_parms['error']);
+            $('#flash').addClass('alert-danger');
+            $('#flash').show();
+          }
+          if (fragment_parms['access_token']) {
+            console.log("Fragments contain a Token: %s", fragment_parms['access_token']);
+          }
+          if (fragment_parms['state']) {
+            console.log("Fragments contain a state: %s", fragment_parms['state']);
+          }
+          console.groupEnd();
+        }
+        if ((typeof window !== 'undefined') && window.localStorage && window.localStorage.authtoken) {
+          var access_token = window.localStorage.authtoken;
+
+          console.log("Browser local storage contains a Token: %s", access_token);
+            if (access_token == null || access_token == undefined || access_token === 'null') {
+              console.log("Token is invalid, deleting it");
+              delete window.localStorage.authtoken;
+            }
+        }
+        purecloud_region       = Cookies.get('PureCloud_region');
+        purecloud_organization = Cookies.get('PureCloud_organization_id');
+        purecloud_application  = Cookies.get('PureCloud_application_id');
+        purecloud_session      = new PureCloudSession(purecloud_region ? ('mypurecloud.' + purecloud_region) : null);
+
+        <% if (settings.env === 'development') { %>
+        purecloud_session.debug(true);
+        <% } %>
+        //purecloud_session.debug(true);
+        <% if (purecloud_token) { %>
+        console.log("Received token from Web Session: <%= purecloud_token %>");
+        purecloud_session.authToken("<%= purecloud_token %>");
+        <% } %>
+        if (purecloud_session.hasAuthorizationToken())
+        {
+          console.log("PureCloud Session has an authorization Token: %s", purecloud_session.authToken());
+          // This will verify the token is good as well as setting the environment properly.
+          login(null, purecloud_region, purecloud_organization, purecloud_application);
+        }
+        else
+        {
+          console.log("PureCloud is not logged in, displaying login button");
+          $('#login_off #icon').addClass('glyphicon-log-in');
+          $('#login_off #text').text($('#login_off').attr('data-login'));
+          $('#dropdown_org .dropdown-menu').on('click', 'li a', login);
+          $('#login_off').show();
+        }
+        initialize_view(purecloud_session);
+      });
+    </script>
+    <!-- SCRIPTS }}} -->
+  </body>
+</html>
+
