@@ -1,0 +1,19 @@
+{
+  "libs": [
+    "body-parser",
+    "bower",
+    "cookie-parser",
+    "debug",
+    "ejs",
+    "ejs-locals",
+    "express",
+    "express-session",
+    "foreman",
+    "git-rev",
+    "morgan",
+    "nconf",
+    "serve-favicon"
+  ],
+  "plugins": {
+  }
+}
