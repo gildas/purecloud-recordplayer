@@ -1,6 +1,8 @@
 {
   "libs": [
     "body-parser",
+    "bootstrap",
+    "bootswatch-dist",
     "bower",
     "cookie-parser",
     "debug",
@@ -10,7 +12,11 @@
     "express-session",
     "foreman",
     "git-rev",
+    "jquery.redirect",
+    "jQuery.ajaxRetry",
+    "js-cookie",
     "morgan",
+    "mustache.js",
     "nconf",
     "serve-favicon"
   ],
