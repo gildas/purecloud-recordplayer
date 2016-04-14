@@ -17,11 +17,11 @@ class StateButton {
   }
 
   get id() {
-    return this._id;
+    return this.id;
   }
 
   set id(value) {
-    this._id = value;
+    this.id = value;
   }
 
   processing() {

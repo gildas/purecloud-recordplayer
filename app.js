@@ -34,12 +34,6 @@ config.argv({
 .defaults({
   port: 3000,
   purecloud: {
-    regions: [
-      { id: 'au', name: 'Australia', suffix: 'com.au' },
-      { id: 'ie', name: 'Ireland',   suffix: 'ie' },
-      { id: 'jp', name: 'Japan',     suffix: 'jp' },
-      { id: 'us', name: 'US',        suffix: 'com' }
-    ],
     "organizations": [
     ]
   },
@@ -74,13 +68,7 @@ app.use(session({
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/bower_components', express.static(path.join(__dirname, '/bower_components')));
 
-app.set('purecloud_regions', config.get('purecloud:regions'));
 app.set('purecloud_organizations', config.get('purecloud:organizations'));
-app.get('purecloud_organizations').forEach(function(organization) {
-  organization['region'] = app.get('purecloud_regions').find(function(region) { return region.id === organization.region_id; });
-});
-console.log("Regions: ", app.get('purecloud_regions'));
-console.log("Config Organizations: ", config.get('purecloud:organizations'));
 console.log("Organizations: ", app.get('purecloud_organizations'));
 
 /**
