@@ -8,7 +8,7 @@ PureCloud.Session = class Session {
     this.error     = undefined;
     this.state     = undefined;
     this.user      = undefined;
-    this.region    = 'com';
+    var region     = 'us';
     this.max_tries = 5;
     this.timeout   = 5000;
 
@@ -19,8 +19,8 @@ PureCloud.Session = class Session {
         console.log("Extracted token from local storage: %s", this.token);
       }
       if (window.localStorage && window.localStorage.region && window.localStorage.region !== 'undefined' && window.localStorage.region !== 'null') {
-        this.region = window.localStorage.region;
-        console.log("Extracted region from local storage: %s", this.region);
+        region = window.localStorage.region;
+        console.log("Extracted region from local storage: %s", region);
       }
       if (window.location.hash) {
         var self = this;
@@ -41,8 +41,7 @@ PureCloud.Session = class Session {
         console.groupEnd();
       }
     }
-    this.api_uri    = 'https://api.mypurecloud.'  + this.region + '/api';
-    this.upload_uri = 'https://apps.mypurecloud.' + this.region + '/uploads';
+    this._set_urls_from_region(region);
   }
 
   /**
@@ -55,36 +54,21 @@ PureCloud.Session = class Session {
    * @example session.authorize_implicit(client_id, 'http://localhost:3000/').done(function(user) {  }).fail(function(error) { });
    */
   authorize_implicit(client_id, redirect_uri, region, state) {
+    var self     = this;
     var deferred = jQuery.Deferred();
-    switch((region || '').toLowerCase()) {
-      case 'au': this.region = 'com.au'; break;
-      case 'ie': this.region = 'ie';     break;
-      case 'jp': this.region = 'jp';     break;
-      case 'us': this.region = 'com';    break;
-      default:   this.region = this.region || 'com'; break;
-    };
-    var auth_url   = 'https://login.mypurecloud.' + this.region + '/authorize'
-                     + '?response_type=token'
-                     + '&client_id=' + encodeURI(client_id)
-                     + '&redirect_uri=' + encodeURI(redirect_uri)
-                     + ((state !== undefined && state !== null && state !== '') ? '&state=' + encodeURI(state) : '');
 
-    this.api_uri    = 'https://api.mypurecloud.'  + this.region + '/api';
-    this.upload_uri = 'https://apps.mypurecloud.' + this.region + '/uploads';
+    this._set_urls_from_region(region);
     if (this.token) { // verify the token is valid
-      var self  = this;
-
       console.log("Verifying existing token: %s", this.token);
       this.get('/v1/users/me')
         .done(function(data){
           console.log('  token is valid, storing it');
           // store the token in local storage
-          if (window.localStorage) { window.localStorage.authtoken = self.token ; window.localStorage.region = self.region; }
+          if (window.localStorage) { window.localStorage.authtoken = self.token ; window.localStorage.region = region; }
           self.user  = data;
           self.error = undefined;
           deferred.resolve(data);
-        })
-        .fail(function(error){
+        }).fail(function(error){
           console.log('  token is invalid, error: %O', error);
           // empty the token and the local storage
           if (window.localStorage) { window.localStorage.authtoken = undefined ; window.localStorage.region = undefined; }
@@ -93,6 +77,12 @@ PureCloud.Session = class Session {
           deferred.reject(error.responseJSON.message);
         });
     } else {
+      var auth_url = this.auth_url + '/authorize'
+                     + '?response_type=token'
+                     + '&client_id=' + encodeURIComponent(client_id)
+                     + '&redirect_uri=' + encodeURIComponent(redirect_uri);
+
+      if (state !== undefined && state !== null && state !== '') { auth_url += '&state=' + encodeURIComponent(state); }
       console.log('Acquiring a token from: %s', auth_url);
       window.location.replace(auth_url);
     }
@@ -110,21 +100,12 @@ PureCloud.Session = class Session {
   authorize_credentials(client_id, secret, region) {
     var self     = this;
     var deferred = jQuery.Deferred();
-    switch((region || '').toLowerCase()) {
-      case 'au': this.region = 'com.au'; break;
-      case 'ie': this.region = 'ie';     break;
-      case 'jp': this.region = 'jp';     break;
-      case 'us': this.region = 'com';    break;
-      default:   this.region = this.region || 'com'; break;
-    };
-    var auth_url   = 'https://login.mypurecloud.' + this.region + '/token';
-    this.api_uri    = 'https://api.mypurecloud.'  + this.region + '/api';
-    this.upload_uri = 'https://apps.mypurecloud.' + this.region + '/uploads';
 
+    this._set_urls_from_region(region);
     console.log("Authorizing: %s", client_id);
     jQuery.ajax({
       method:   'POST',
-      url:      auth_url,
+      url:      self.auth_url + '/token',
       async:    false,
       username: client_id,
       password: secret,
@@ -160,7 +141,7 @@ PureCloud.Session = class Session {
     console.log("  token: %s", this.token);
     return jQuery.ajax({
       method:  method,
-      url:     this.api_uri + path,
+      url:     this.api_url + path,
       headers: {
 //        'User-Agent':   'PureCloud JS ' + PureCloud.version,
         'Accept':       'application/json',
@@ -196,4 +177,32 @@ PureCloud.Session = class Session {
    * @see api_request
    */
   delete(path, timeout, max_tries) { return this.api_request('DELETE', path, timeout, max_tries); }
+
+  /**
+   * @description private method: Gets the Top Level domain of a given country.
+   *              So far, valid values are: 'au', 'ie', 'jp', 'us'. Default Value: 'us'
+   * @param  {string} region The region to authenticate against.
+   * @return {string}        the top level domain
+   */
+  _tld_from_country(region) {
+    switch((region || '').toLowerCase()) {
+      case 'au': return 'com.au'; break;
+      case 'ie': return 'ie';     break;
+      case 'jp': return 'jp';     break;
+      case 'us': return 'com';    break;
+      default:   return 'com';    break;
+    };
+  }
+
+  /**
+   * @description private method: Sets all URLs used to 
+   *              So far, valid values are: 'au', 'ie', 'jp', 'us'. Default Value: 'us'
+   * @param  {string} region The region to authenticate against.
+   */
+  _set_urls_from_region(region) {
+    this.region     = this._tld_from_country(region);
+    this.auth_url   = 'https://login.mypurecloud.' + this.region;
+    this.api_url    = 'https://api.mypurecloud.'   + this.region + '/api';
+    this.upload_url = 'https://apps.mypurecloud.'  + this.region + '/uploads';
+  }
 }
