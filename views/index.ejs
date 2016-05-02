@@ -6,9 +6,22 @@
 </div>
 
 <div class="row">
+  <h3>Recordings for today &nbsp;<span id="spinner-load" class="fa fa-refresh fa-spin" style="font-size:24px"></span></h3>
+  <div id="recordings_view" class="col-md4"></div>
+  <div id="recording_view" class="col-md4"></div>
 </div>
+<script id="recordings_template" type="text/template">
+
+<h3>Recordings &nbsp;<span class="badge">{{total}}</span></h3>
+  <table class="table">
+    {{#entitites}}
+      <tr><td>{{id}}</td></tr>
+    {{/entities}}
+  </table>
+</script>
 <script>
 function initialize_view()
 {
+  purecloud_session.post('/api/v2/analytics/conversations/aggregates/query');
 }
 </script>
