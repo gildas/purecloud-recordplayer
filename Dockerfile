@@ -4,6 +4,8 @@ MAINTAINER Gildas Cherruel <gildas.cherruel@inin.com>
 ENV NODE_ENV=development
 WORKDIR /usr/local/src
 
+RUN npm install --global foreman@2.0.0-1
+
 COPY package.json /usr/local/src/package.json
 COPY bower.json   /usr/local/src/bower.json
 RUN npm install
