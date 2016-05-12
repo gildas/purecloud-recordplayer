@@ -17,5 +17,8 @@ COPY public /usr/local/src/public
 COPY routes /usr/local/src/routes
 COPY views /usr/local/src/views
 
+RUN npm --version
+RUN nf --version
+
 EXPOSE 3000
-CMD [ "npm", "app.js", "--" ]
+CMD [ "npm", "start" ]
