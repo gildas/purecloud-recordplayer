@@ -4,7 +4,8 @@ module.exports = {
     'public/stylesheets/*.css',
     'public/javascripts/*.js',
     'public/images/*',
-    'public/favicon.ico'
+    'public/favicon.ico',
+    'views/**/*.ejs'
   ],
   ghostMode: {
     forms:  true,
