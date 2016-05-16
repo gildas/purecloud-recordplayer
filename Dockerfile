@@ -5,6 +5,7 @@ ENV NODE_ENV=development
 WORKDIR /usr/local/src
 
 RUN npm install --global foreman@2.0.0-1
+RUN npm install --global browser-sync
 
 COPY package.json /usr/local/src/package.json
 COPY bower.json   /usr/local/src/bower.json
