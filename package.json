@@ -24,9 +24,9 @@
   },
   "homepage": "https://github.com/gildas/purecloud-recordplayer#readme",
   "dependencies": {
-    "body-parser": "1.15.0",
+    "body-parser": "1.15.1",
     "bower": "1.7.9",
-    "browser-sync": "2.12.1",
+    "browser-sync": "2.12.8",
     "cookie-parser": "1.4.1",
     "debug": "2.2.0",
     "ejs": "2.4.1",
