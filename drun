@@ -9,6 +9,12 @@ if [[ -n $(docker ps --all | grep $CONTAINER) ]]; then
   status=$? ; [[ $status != 0 ]] && echo "Error $status: cannot remove container $CONTAINER" && exit $status
 fi
 
+if [[ $1 == "--rebuild" && -n $(docker images | grep $IMAGE) ]]; then
+  echo "Removing docker image $IMAGE"
+  docker rmi $IMAGE
+  status=$? ; [[ $status != 0 ]] && echo "Error $status: cannot remove docker image $IMAGE" && exit $status
+fi
+
 if [[ -z $(docker images | grep $IMAGE) ]]; then
   echo "Building docker image $IMAGE"
   docker build --tag $IMAGE .
