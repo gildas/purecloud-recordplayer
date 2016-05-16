@@ -1,1 +1,18 @@
-docker run -p 3000:3000 --name recordplayer -v /Users/gildas.cherruel/Documents/ININ/PureCloud/RecordPlayer:/usr/local/src recordplayer npm start
+#! /usr/bin/env bash
+
+IMAGE=recordplayer
+CONTAINER=recordplayer
+
+if [[ -n $(docker ps --all | grep $CONTAINER) ]]; then
+  echo "Removing docker container $CONTAINER"
+  docker rm $CONTAINER
+  status=$? ; [[ $status != 0 ]] && echo "Error $status: cannot remove container $CONTAINER" && exit $status
+fi
+
+if [[ -z $(docker images | grep $IMAGE) ]]; then
+  echo "Building docker image $IMAGE"
+  docker build --tag $IMAGE .
+  status=$? ; [[ $status != 0 ]] && echo "Error $status: cannot build docker image $IMAGE" && exit $status
+fi
+
+docker run -p 3000:3000 --name $CONTAINER -v "$(pwd):/usr/local/src" $IMAGE nf start
