@@ -1,0 +1,1 @@
+docker run -p 3000:3000 --name recordplayer -v /Users/gildas.cherruel/Documents/ININ/PureCloud/RecordPlayer:/usr/local/src recordplayer npm start
