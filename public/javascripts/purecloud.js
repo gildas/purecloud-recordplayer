@@ -128,13 +128,15 @@ PureCloud.Session = class Session {
    * @description Executes a REST request in PureCloud
    * @param  {string} method     The HTTP method to use ('POST', 'GET', 'PUT', 'DELETE', etc)
    * @param  {string} path       The REST Path. e.g.: '/v1/users/me'
+   * @param  {map} options       Various options for the REST request. E.g.: timeout (default: 5000 [ms]), max_retries (default: 5)
    * @param  {integer} timeout   The timeout to execute the request
    * @param  {integer} max_tries How many times the request should be resent to PureCloud
    * @param  {JSON}    body      The body of the REST request as a JSON object
    * @return {Promise}           a jQuery Promise object returned by jQuery.ajax
-   * @example session.api_request('GET', '/v1/users/me').done(function(user) { }).fail(function(error) {  });
+   * @example session.api('GET', '/v2/users/me').done(function(user) { }).fail(function(error) {  });
+   * @example session.api('GET', '/v2/users/me', {timeout: 10000, max_retries: 7 }).done(function(user) { }).fail(function(error) {  });
    */
-  api_request(method, path, timeout, max_tries, body) {
+  api(method, path, body, options = {}) {
     var self = this;
 
     if (this.api_url == undefined) {
@@ -152,35 +154,35 @@ PureCloud.Session = class Session {
         'Content-Type': 'application/json',
       },
       beforeSend:  function(xhr) { xhr.setRequestHeader('Authorization', 'bearer ' + self.token); },
-      timeout:     timeout || this.timeout,
-      shouldRetry: max_tries || this.max_tries,
+      timeout:     options.timeout   || this.timeout   || 2000,
+      shouldRetry: options.max_tries || this.max_tries || 1,
       data:        (body != null || body != undefined) ? JSON.stringify(body) : null,
     });
   }
 
   /**
-   * @description shortcut for api_request('POST')
-   * @see api_request
+   * @description shortcut for api('POST')
+   * @see api
    */
-  post(path, timeout, max_tries, body) { return this.api_request('POST', path, timeout, max_tries, body); }
+  post(path, body, options = {}) { return this.api('POST', path, body, options); }
 
   /**
-   * @description shortcut for api_request('GET')
-   * @see api_request
+   * @description shortcut for api('GET')
+   * @see api
    */
-  get(path, timeout, max_tries) { return this.api_request('GET', path, timeout, max_tries); }
+  get(path, options = {}) { return this.api('GET', path, options); }
 
   /**
-   * @description shortcut for api_request('PUT')
-   * @see api_request
+   * @description shortcut for api('PUT')
+   * @see api
    */
-  put(path, timeout, max_tries, body) { return this.api_request('PUT', path, timeout, max_tries, body); }
+  put(path, body, options = {}) { return this.api('PUT', path, body, options); }
 
   /**
-   * @description shortcut for api_request('DELETE')
-   * @see api_request
+   * @description shortcut for api('DELETE')
+   * @see api
    */
-  delete(path, timeout, max_tries) { return this.api_request('DELETE', path, timeout, max_tries); }
+  delete(path, options = {}) { return this.api('DELETE', path, options); }
 
   /**
    * @description private method: Gets the Top Level domain of a given country.
