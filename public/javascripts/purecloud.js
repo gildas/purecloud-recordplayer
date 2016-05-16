@@ -137,7 +137,11 @@ PureCloud.Session = class Session {
   api_request(method, path, timeout, max_tries, body) {
     var self = this;
 
-    console.log("%s: %s%s", method, this.api_uri, path);
+    if (this.api_url == undefined) {
+      console.error('PureCloud API URL not properly defined, aborting');
+      throw new Error('PureCloudA API URI is undefined');
+    }
+    console.log("%s: %s%s", method, this.api_url, path);
     console.log("  token: %s", this.token);
     return jQuery.ajax({
       method:  method,
