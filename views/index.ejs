@@ -20,8 +20,66 @@
   </table>
 </script>
 <script>
+function get_week_first(date) {
+  var scratch = new Date(date);
+  var today   = scratch.getUTCDay();
+
+  // for now, first day of the week is Monday
+  return new Date(scratch.setUTCDate(scratch.getUTCDate() -today + (today == 0 ? -6 : 1)));
+}
+
 function initialize_view()
 {
-  purecloud_session.post('/api/v2/analytics/conversations/aggregates/query');
+  var stop  = Date.today();
+  //var start = stop.is().monday() ? new Date(stop) : new Date(stop.previous().monday());
+  //var start = new Date(stop.previous().month());
+  var start = new Date(stop);
+
+  stop.setHours(23);
+  stop.setMinutes(59);
+  stop.setSeconds(59);
+  stop.setMilliseconds(999);
+
+  console.log("Interval: " + start + '/' + stop);
+  console.log("UTC Interval: " + start.toISOString() + '/' + stop.toISOString());
+  purecloud_session.post('/v2/analytics/conversations/details/query', {
+    interval: start.toISOString() + '/' + stop.toISOString(),
+  }).done(function(data) {
+    console.log('data: %O', data);
+    data.conversations.forEach(function(conversation) {
+      console.log("  identifier:   %s", conversation.conversationId);
+      console.log("  start:        %s", conversation.conversationStart);
+      console.log("  Participants: ");
+      conversation.participants.forEach(function(participant) {
+        console.log("    name:     %s (%s)", participant.participantName, participant.participantId);
+        console.log("    purpose:  %s", participant.purpose);
+        if (participant.purpose === 'agent')
+        {
+          console.log("    user id:  %s", participant.userId);
+        }
+        console.log("    sessions: ");
+        participant.sessions.forEach(function(session) {
+          console.log("      identifier:            %s", session.sessionId);
+          console.log("      ani:                   %s", session.ani);
+          console.log("      direction:             %s", session.direction);
+          console.log("      dnis:                  %s", session.dnis);
+          console.log("      edge:                  %s", session.edgeId);
+          console.log("      mediaType:             %s", session.mediaType);
+          console.log("      outboundCampaignId:    %s", session.outboundCampaignId);
+          console.log("      outboundContactId:     %s", session.outboundContactId);
+          console.log("      outboundContactListId: %s", session.outboundContactListId);
+          console.log("      segments:");
+          session.segments.forEach(function(segment) {
+            console.log("      type:  %s (disconnect type: %s)", segment.segmentType, segment.disconnectType);
+            console.log("      queue: %s", segment.queueId);
+            console.log("      start: %s", segment.segmentStart);
+            console.log("      end:   %s", segment.segmentEnd);
+          });
+        });
+      });
+    });
+  }).fail(function(error){
+    console.error("  failure: %O", error);
+  });
 }
 </script>
