@@ -4,13 +4,13 @@ var PureCloud = { version: '0.0.1' }
 
 PureCloud.Session = class Session {
   constructor() {
-    this.token     = undefined;
-    this.error     = undefined;
-    this.state     = undefined;
-    this.user      = undefined;
-    var region     = 'us';
-    this.max_tries = 5;
-    this.timeout   = 5000;
+    this.token      = undefined;
+    this.error      = undefined;
+    this.user       = undefined;
+    this.user_state = undefined;
+    var region      = 'us';
+    this.max_tries  = 5;
+    this.timeout    = 5000;
 
     // gather information from the window local storage, then the hash
     if (typeof window != 'undefined') {
@@ -31,9 +31,9 @@ PureCloud.Session = class Session {
 
           console.log("Found parameter: %s = %s", parameter[0], value);
           switch(parameter[0]) {
-            case 'access_token': self.token = value; break;
-            case 'error':        self.error = value; break;
-            case 'state':        self.state = value; break;
+            case 'access_token': self.token      = value; break;
+            case 'error':        self.error      = value; break;
+            case 'state':        self.user_state = value; break;
             default:             break; // we ignore what we do not follow
           }
         }});
@@ -45,15 +45,23 @@ PureCloud.Session = class Session {
   }
 
   /**
+   * @description Tells if the session is connected to a PureCloud organization or not
+   * @return {bool}  True if the session is connected
+   */
+  is_connected() {
+    return this.token !== undefined;
+  }
+
+  /**
    * @description Authorizes a client via OAuth with Token Implicit Grant. Cannot be used in node.js
    * @param  {string} client_id    The Client Identifier as defined in /admin/integrations/oauth
    * @param  {string} redirect_uri The authorized URI PureClound should redirect the browser after the authentication.
    * @param  {string} region       The region to authenticate against. Valid values are: 'au', 'ie', 'jp', 'us'. Default Value: 'us'
-   * @param  {string} state        an optional object that will be passed to the redirect URL.
-   * @return {Promise}             a jQuery Promise object. The done handler will receive the logged user, while the fail handler will receive the PureCloud error
+   * @param  {string} user_state   An optional object that will be passed to the redirect URL.
+   * @return {Promise}             A jQuery Promise object. The done handler will receive the logged user, while the fail handler will receive the PureCloud error
    * @example session.authorize_implicit(client_id, 'http://localhost:3000/').done(function(user) {  }).fail(function(error) { });
    */
-  authorize_implicit(client_id, redirect_uri, region, state) {
+  authorize_implicit(client_id, redirect_uri, region, user_state) {
     var self     = this;
     var deferred = jQuery.Deferred();
 
@@ -82,7 +90,7 @@ PureCloud.Session = class Session {
                      + '&client_id=' + encodeURIComponent(client_id)
                      + '&redirect_uri=' + encodeURIComponent(redirect_uri);
 
-      if (state !== undefined && state !== null && state !== '') { auth_url += '&state=' + encodeURIComponent(state); }
+      if (user_state !== undefined && user_state !== null && user_state !== '') { auth_url += '&state=' + encodeURIComponent(user_state); }
       console.log('Acquiring a token from: %s', auth_url);
       window.location.replace(auth_url);
     }
