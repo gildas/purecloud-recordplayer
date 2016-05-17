@@ -21,4 +21,4 @@ if [[ -z $(docker images | grep $IMAGE) ]]; then
   status=$? ; [[ $status != 0 ]] && echo "Error $status: cannot build docker image $IMAGE" && exit $status
 fi
 
-docker run -p 3000:3000 --name $CONTAINER -v "$(pwd):/usr/local/src" $IMAGE nf start
+docker run -p 3000:3000 --name $CONTAINER -v "$(pwd):/usr/local/src" --user www-data --rm $IMAGE npm start
