@@ -6,30 +6,34 @@
 </div>
 
 <div class="row">
-  <h3>Recordings for today &nbsp;<span id="spinner-load" class="fa fa-refresh fa-spin" style="font-size:24px"></span></h3>
-  <div id="recordings_view" class="col-md4"></div>
+  <h3>Voice calls for today &nbsp;<span id="conversations_size" class="badge">0</span>&nbsp;<span id="spinner-load" class="fa fa-refresh fa-spin" style="font-size:24px"></span></h3>
+  <div id="conversations_view" class="col-md4"></div>
   <div id="recording_view" class="col-md4"></div>
 </div>
-<script id="recordings_template" type="text/template">
 
+<script id="conversations_template" type="text/template">
+  <table class="table">
+    {{#conversations}}
+      <tr><td>{{id}}</td><td>{{start}}</td></tr>
+    {{/conversations}}
+  </table>
+</script>
+
+<script id="recordings_template" type="text/template">
 <h3>Recordings &nbsp;<span class="badge">{{total}}</span></h3>
   <table class="table">
-    {{#entitites}}
+    {{#conversations}}
       <tr><td>{{id}}</td></tr>
-    {{/entities}}
+    {{/conversations}}
   </table>
 </script>
 <script>
-function get_week_first(date) {
-  var scratch = new Date(date);
-  var today   = scratch.getUTCDay();
-
-  // for now, first day of the week is Monday
-  return new Date(scratch.setUTCDate(scratch.getUTCDate() -today + (today == 0 ? -6 : 1)));
-}
+var recordings = [];
 
 function initialize_view()
 {
+  if (! purecloud_session.is_connected()) { return; }
+
   var stop  = Date.today();
   //var start = stop.is().monday() ? new Date(stop) : new Date(stop.previous().monday());
   //var start = new Date(stop.previous().month());
@@ -44,12 +48,28 @@ function initialize_view()
   console.log("UTC Interval: " + start.toISOString() + '/' + stop.toISOString());
   purecloud_session.post('/v2/analytics/conversations/details/query', {
     interval: start.toISOString() + '/' + stop.toISOString(),
-  }).done(function(data) {
-    console.log('data: %O', data);
-    data.conversations.forEach(function(conversation) {
+    segmentFilters: [
+    {
+      type: "and",
+      predicates: [
+      { dimension: 'mediaType', value: 'voice'}
+      ],
+      }
+    ],
+  }).done(view_recordings)
+  .fail(function(error){ console.error("  failure: %O", error); });
+}
+
+function view_recordings(data) {
+  var display_data = { conversations: [] };
+
+  $('#conversations_size').text(data.conversations.length);
+  console.groupCollapsed('Conversations: %d', data.conversations.length);
+  data.conversations.forEach(function(conversation) {
+    var display_conversation = { id: conversation.conversationId, start: conversation.conversationStart.toString() };
       console.log("  identifier:   %s", conversation.conversationId);
       console.log("  start:        %s", conversation.conversationStart);
-      console.log("  Participants: ");
+      console.groupCollapsed("  Participants: %d", conversation.participants.length);
       conversation.participants.forEach(function(participant) {
         console.log("    name:     %s (%s)", participant.participantName, participant.participantId);
         console.log("    purpose:  %s", participant.purpose);
@@ -57,7 +77,7 @@ function initialize_view()
         {
           console.log("    user id:  %s", participant.userId);
         }
-        console.log("    sessions: ");
+        console.groupCollapsed("    sessions: %d", participant.sessions.length);
         participant.sessions.forEach(function(session) {
           console.log("      identifier:            %s", session.sessionId);
           console.log("      ani:                   %s", session.ani);
@@ -68,18 +88,31 @@ function initialize_view()
           console.log("      outboundCampaignId:    %s", session.outboundCampaignId);
           console.log("      outboundContactId:     %s", session.outboundContactId);
           console.log("      outboundContactListId: %s", session.outboundContactListId);
-          console.log("      segments:");
+          console.groupCollapsed("      segments: %d", session.segments.length);
           session.segments.forEach(function(segment) {
-            console.log("      type:  %s (disconnect type: %s)", segment.segmentType, segment.disconnectType);
-            console.log("      queue: %s", segment.queueId);
-            console.log("      start: %s", segment.segmentStart);
-            console.log("      end:   %s", segment.segmentEnd);
+            console.log("        type:  %s (disconnect type: %s)", segment.segmentType, segment.disconnectType);
+            console.log("        queue: %s", segment.queueId);
+            console.log("        start: %s", segment.segmentStart);
+            console.log("        end:   %s", segment.segmentEnd);
           });
+          console.groupEnd();
         });
+        console.groupEnd();
       });
+      console.groupEnd();
+      display_data.conversations.push(display_conversation);
     });
-  }).fail(function(error){
-    console.error("  failure: %O", error);
-  });
+    console.groupEnd();
+  render_template(display_data, 'conversations_view', 'conversations_template');
+  $('#spinner-load').hide();
 }
+/* Get recordings of a conversation:
+
+    data.conversations.forEach(function(conversation){
+      purecloud_session.get('/v2/conversations/' + conversation.conversationId + '/recordings')
+        .done(function(data_recording){ console.log("data recording: %O", data_recording); 
+        }).fail(function(error){ console.error("  failure: %O", error); });
+    });
+*/
+
 </script>
