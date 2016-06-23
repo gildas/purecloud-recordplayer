@@ -25,18 +25,15 @@ PureCloud.Session = class Session {
       if (window.location.hash) {
         var self = this;
         console.groupCollapsed('Analyzing URI fragment');
-        window.location.hash.substring(1).split('&').forEach(function(pair) { if (pair.length > 0) {
-          var parameter = pair.split('=');
-          var value     = parameter.slice(1).join('=') || true;
-
-          console.log("Found parameter: %s = %s", parameter[0], value);
-          switch(parameter[0]) {
+        window.location.hash.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m,key,value) {
+          console.log("Found parameter: %s = %s", key, value);
+          switch(key) {
             case 'access_token': self.token      = value; break;
             case 'error':        self.error      = value; break;
             case 'state':        self.user_state = value; break;
             default:             break; // we ignore what we do not follow
           }
-        }});
+        });
         window.location.hash = '';
         console.groupEnd();
       }
